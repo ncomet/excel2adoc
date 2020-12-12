@@ -2,10 +2,11 @@ package fr.ncomet
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.openxml4j.exceptions.OLE2NotOfficeXmlFileException
+import org.apache.poi.ss.usermodel.CellType.*
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import picocli.CommandLine
 import picocli.CommandLine.*
-import picocli.CommandLine.Model.*
+import picocli.CommandLine.Model.CommandSpec
 import java.io.File
 import java.io.FileInputStream
 import java.util.concurrent.Callable
@@ -21,24 +22,46 @@ val allowedFileExtensions = listOf("xlsx", "xls", "csv")
 )
 class Excel2Asciidoc : Callable<Int> {
 
-    @Spec lateinit var spec : CommandSpec
+    @Spec
+    lateinit var spec: CommandSpec
 
-    @Parameters(index = "0", arity = "1", description=["An .xlsx, .xls or .csv file to convert to adoc"])
+    @Parameters(index = "0", arity = "1", description = ["An .xlsx, .xls or .csv file to convert to adoc"])
     lateinit var inputFile: File
 
-    @Option(names = ["-o", "--output"], paramLabel = "example.adoc", description = ["the output file name, if not provided it will write to stdout"])
+    @Option(
+        names = ["-o", "--output"],
+        paramLabel = "example.adoc",
+        description = ["the output file name, if not provided it will write to stdout"]
+    )
     var outputFileName: String? = null
 
     override fun call(): Int {
         when {
             !inputFile.exists() -> throw ParameterException(spec.commandLine(), "${inputFile.name} does not exist")
-            inputFile.extension !in allowedFileExtensions -> throw ParameterException(spec.commandLine(), "${inputFile.name} needs to be of type ${allowedFileExtensions.joinToString()}")
+            inputFile.extension !in allowedFileExtensions -> throw ParameterException(
+                spec.commandLine(),
+                "${inputFile.name} needs to be of type ${allowedFileExtensions.joinToString()}"
+            )
             else -> {
                 FileInputStream(inputFile).use {
                     val workBook = try {
                         XSSFWorkbook(it)
                     } catch (e: OLE2NotOfficeXmlFileException) {
                         HSSFWorkbook(it)
+                    }
+                    workBook.getSheetAt(0).getRow(0).cellIterator().forEach { cell ->
+                        spec.commandLine().out.println(
+                            when (cell.cellType) {
+                                _NONE -> ""
+                                NUMERIC -> cell.numericCellValue.toString()
+                                STRING -> cell.stringCellValue
+                                FORMULA -> ""
+                                BLANK -> ""
+                                BOOLEAN -> cell.booleanCellValue.toString()
+                                ERROR -> cell.errorCellValue.toString()
+                                else -> ""
+                            }
+                        )
                     }
                 }
                 return ExitCode.OK
