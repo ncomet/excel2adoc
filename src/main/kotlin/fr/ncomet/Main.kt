@@ -59,7 +59,7 @@ class Excel2Asciidoc : Callable<Int> {
                                 BLANK -> ""
                                 BOOLEAN -> cell.booleanCellValue.toString()
                                 ERROR -> cell.errorCellValue.toString()
-                                else -> ""
+                                null -> ""
                             }
                         )
                     }
