@@ -5,6 +5,7 @@ import org.apache.poi.openxml4j.exceptions.OLE2NotOfficeXmlFileException
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType.*
 import org.apache.poi.ss.usermodel.Row
+import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import picocli.CommandLine
 import picocli.CommandLine.*
@@ -68,16 +69,20 @@ class Excel2Asciidoc : Callable<Int> {
                         HSSFWorkbook(it)
                     }
                     val sheet = workBook.getSheetAt(sheetNumber - 1)
-                    val rows = sheet.toList().takeLastWhile { row -> row.isNotEmpty }
-                    out.tableSeparator()
-                    rows.printHeader()
-                    rows.printContentAfterHeader()
-                    out.tableSeparator()
-                    out.newLine()
+                    sheet.print(noHeaders)
                 }
                 return ExitCode.OK
             }
         }
+    }
+
+    private fun Sheet.print(noHeaders: Boolean) {
+        val rows = toList().takeLastWhile { row -> row.isNotEmpty }
+        out.tableSeparator()
+        rows.printHeader()
+        rows.printContentAfterHeader()
+        out.tableSeparator()
+        out.newLine()
     }
 
     private fun List<Row>.printHeader() {
