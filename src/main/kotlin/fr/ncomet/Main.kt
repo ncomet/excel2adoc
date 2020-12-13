@@ -35,13 +35,6 @@ class Excel2Asciidoc : Callable<Int> {
     lateinit var inputFile: File
 
     @Option(
-        names = ["-o", "--output"],
-        paramLabel = "example.adoc",
-        description = ["the output file name, if not provided it will write to stdout"]
-    )
-    var outputFileName: String? = null
-
-    @Option(
         names = ["-n", "--no-headers"],
         description = ["disables interpretation of first row as header"]
     )
