@@ -62,43 +62,64 @@ class Excel2Asciidoc : Callable<Int> {
                         HSSFWorkbook(it)
                     }
                     val sheet = workBook.getSheetAt(sheetNumber - 1)
-                    sheet.print(noHeaders)
+                    val emptyCellsToShift = sheet.map { row -> row.takeWhile { cell -> cell.isEmpty }.size }.min() ?: 0
+                    sheet.print(noHeaders, emptyCellsToShift)
                 }
                 return ExitCode.OK
             }
         }
     }
 
-    private fun Sheet.print(noHeaders: Boolean) {
+    private fun Sheet.print(noHeaders: Boolean, emptyCellsToShift: Int = 0) {
         val rows = toList().takeLastWhile { row -> row.isNotEmpty }
-        out.tableSeparator()
-        rows.printHeader()
-        rows.printContentAfterHeader()
+        if (noHeaders) {
+            rows.printColumnDescriptor(emptyCellsToShift)
+            out.tableSeparator()
+            rows.printContent(emptyCellsToShift)
+        } else {
+            out.tableSeparator()
+            rows.printHeader(emptyCellsToShift)
+            rows.printContentAfterHeader(emptyCellsToShift)
+        }
         out.tableSeparator()
         out.newLine()
     }
 
-    private fun List<Row>.printHeader() {
-        val header = first()
+    private fun List<Row>.printHeader(emptyCellsToShift: Int = 0) =
         out.println(
-            header.cellIterator()
+            first().cellIterator()
                 .asSequence()
+                .drop(emptyCellsToShift)
                 .map(renderCell)
                 .joinToString(prefix = "|", separator = " |")
         )
-    }
 
-    private fun List<Row>.printContentAfterHeader() {
-        val content = drop(1)
+    private fun List<Row>.printContentAfterHeader(emptyCellsToShift: Int = 0) =
         out.println(
-            content.joinToString(separator = lineSeparator() + lineSeparator()) { row ->
-                row.cellIterator()
+            drop(1).joinToString(separator = lineSeparator() + lineSeparator()) {
+                it.cellIterator()
                     .asSequence()
+                    .drop(emptyCellsToShift)
                     .map(renderCell)
                     .joinToString(prefix = "|", separator = "${lineSeparator()}|")
-            })
-    }
+            }
+        )
+
+    private fun List<Row>.printContent(emptyCellsToShift: Int = 0) =
+        out.println(
+            joinToString(separator = lineSeparator() + lineSeparator()) {
+                it.cellIterator()
+                    .asSequence()
+                    .drop(emptyCellsToShift)
+                    .map(renderCell)
+                    .joinToString(prefix = "|", separator = "${lineSeparator()}|")
+            }
+        )
+
+    private fun List<Row>.printColumnDescriptor(emptyCellsToShift: Int = 0) =
+        out.println("""[cols="${first().physicalNumberOfCells - emptyCellsToShift}*"]""")
 }
+
 
 val renderCell: (Cell) -> String = { cell ->
     when (cell.cellType) {
@@ -118,5 +139,6 @@ internal fun command(args: Array<String>) = CommandLine(Excel2Asciidoc()).execut
 private fun CommandSpec.tableSeparator() = commandLine().out.println("|===")
 private fun CommandSpec.println(s: String) = commandLine().out.println(s)
 private fun CommandSpec.newLine() = commandLine().out.println(lineSeparator())
+private val Cell.isEmpty get() = cellType == BLANK
 private val Cell.isNotEmpty get() = cellType != BLANK
 private val Row.isNotEmpty get() = cellIterator().asSequence().any { it.isNotEmpty }
