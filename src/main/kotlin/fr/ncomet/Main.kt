@@ -9,6 +9,7 @@ import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import picocli.CommandLine
 import picocli.CommandLine.*
+import picocli.CommandLine.Help.Visibility.ALWAYS
 import picocli.CommandLine.Model.CommandSpec
 import java.io.File
 import java.io.FileInputStream
@@ -31,21 +32,28 @@ class Excel2Asciidoc : Callable<Int> {
     @Spec
     lateinit var out: CommandSpec
 
-    @Parameters(index = "0", arity = "1", description = ["An .xlsx, .xls or .csv file to convert to adoc"])
+    @Parameters(
+        index = "0",
+        description = ["An .xlsx, .xls or .csv file to convert to adoc"],
+        arity = "1"
+    )
     lateinit var inputFile: File
 
     @Option(
         names = ["-n", "--no-headers"],
-        description = ["disables interpretation of first row as header"]
+        description = ["disables interpretation of first row as header"],
+        defaultValue = "false",
+        showDefaultValue = ALWAYS
     )
     var noHeaders: Boolean = false
 
     @Option(
         names = ["-s", "--sheet"],
         paramLabel = "2",
-        description = ["sheet number, starting at 1"]
+        description = ["sheet number, starting at 1. if not provided, will try to print all sheets"],
+        arity = "1"
     )
-    var sheetNumber: Int = 1
+    val sheetNumber: Int? = null
 
     override fun call(): Int {
         when {
@@ -61,17 +69,27 @@ class Excel2Asciidoc : Callable<Int> {
                     } catch (e: OLE2NotOfficeXmlFileException) {
                         HSSFWorkbook(it)
                     }
-                    val sheet = workBook.getSheetAt(sheetNumber - 1)
-                    val emptyCellsToShift = sheet.map { row -> row.takeWhile { cell -> cell.isEmpty }.size }.min() ?: 0
-                    sheet.print(noHeaders, emptyCellsToShift)
+                    if (sheetNumber == null) {
+                        workBook.forEach { sheet -> sheet.print(noHeaders) }
+                    } else {
+                        workBook.getSheetAt(sheetNumber - 1).print(noHeaders)
+                    }
                 }
                 return ExitCode.OK
             }
         }
     }
 
-    private fun Sheet.print(noHeaders: Boolean, emptyCellsToShift: Int = 0) {
+    private fun Sheet.print(noHeaders: Boolean) {
+        val maxOfFirstPhysicalCell = map { row -> row.firstCellNum.toInt() }.max() ?: 0
+        val minOfFirstNonEmptyCell = map { row -> row.takeWhile { cell -> cell.isEmpty }.size }.min() ?: 0
+        val emptyCellsToShift = maxOf(
+            maxOfFirstPhysicalCell,
+            minOfFirstNonEmptyCell
+        )
+
         val rows = toList().takeLastWhile { row -> row.isNotEmpty }
+
         if (noHeaders) {
             rows.printColumnDescriptor(emptyCellsToShift)
             out.tableSeparator()
@@ -85,39 +103,43 @@ class Excel2Asciidoc : Callable<Int> {
         out.newLine()
     }
 
-    private fun List<Row>.printHeader(emptyCellsToShift: Int = 0) =
+    private fun List<Row>.printHeader(emptyCellsToShift: Int) =
         out.println(
             first().cellIterator()
                 .asSequence()
-                .drop(emptyCellsToShift)
+                .filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }
                 .map(renderCell)
                 .joinToString(prefix = "|", separator = " |")
         )
 
-    private fun List<Row>.printContentAfterHeader(emptyCellsToShift: Int = 0) =
+    private fun List<Row>.printContentAfterHeader(emptyCellsToShift: Int) =
         out.println(
             drop(1).joinToString(separator = lineSeparator() + lineSeparator()) {
                 it.cellIterator()
                     .asSequence()
-                    .drop(emptyCellsToShift)
+                    .filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }
                     .map(renderCell)
                     .joinToString(prefix = "|", separator = "${lineSeparator()}|")
             }
         )
 
-    private fun List<Row>.printContent(emptyCellsToShift: Int = 0) =
+    private fun List<Row>.printContent(emptyCellsToShift: Int) =
         out.println(
             joinToString(separator = lineSeparator() + lineSeparator()) {
                 it.cellIterator()
                     .asSequence()
-                    .drop(emptyCellsToShift)
+                    .filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }
                     .map(renderCell)
                     .joinToString(prefix = "|", separator = "${lineSeparator()}|")
             }
         )
 
-    private fun List<Row>.printColumnDescriptor(emptyCellsToShift: Int = 0) =
-        out.println("""[cols="${first().physicalNumberOfCells - emptyCellsToShift}*"]""")
+    private fun List<Row>.printColumnDescriptor(emptyCellsToShift: Int) =
+        out.println(
+            """[cols="${
+                first().filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }.count()
+            }*"]"""
+        )
 }
 
 
@@ -126,7 +148,7 @@ val renderCell: (Cell) -> String = { cell ->
         _NONE -> ""
         NUMERIC -> cell.numericCellValue.toString()
         STRING -> cell.stringCellValue
-        FORMULA -> ""
+        FORMULA -> cell.cellFormula
         BLANK -> ""
         BOOLEAN -> cell.booleanCellValue.toString()
         ERROR -> cell.errorCellValue.toString()
@@ -139,6 +161,6 @@ internal fun command(args: Array<String>) = CommandLine(Excel2Asciidoc()).execut
 private fun CommandSpec.tableSeparator() = commandLine().out.println("|===")
 private fun CommandSpec.println(s: String) = commandLine().out.println(s)
 private fun CommandSpec.newLine() = commandLine().out.println(lineSeparator())
-private val Cell.isEmpty get() = cellType == BLANK
-private val Cell.isNotEmpty get() = cellType != BLANK
+private val Cell.isEmpty get() = cellType == BLANK || renderCell(this).trim() == ""
+private val Cell.isNotEmpty get() = !isEmpty
 private val Row.isNotEmpty get() = cellIterator().asSequence().any { it.isNotEmpty }
