@@ -25,7 +25,7 @@ fun main(args: Array<String>): Unit = exitProcess(command(args))
     name = "excel2adoc",
     mixinStandardHelpOptions = true,
     version = ["excel2adoc v1.0"],
-    description = ["Converts an .xlsx, .xls or .csv file into its asciidoc representation"]
+    description = ["Prints an .xlsx, .xls or .csv file into its asciidoc representation on stdout"]
 )
 class Excel2Asciidoc : Callable<Int> {
 
@@ -34,10 +34,10 @@ class Excel2Asciidoc : Callable<Int> {
 
     @Parameters(
         index = "0",
-        description = ["An .xlsx, .xls or .csv file to convert to adoc"],
-        arity = "1"
+        description = ["One or more .xlsx, .xls or .csv file(s) to print stdout"],
+        arity = "1..*"
     )
-    lateinit var inputFile: File
+    lateinit var inputFiles: List<File>
 
     @Option(
         names = ["-n", "--no-headers"],
@@ -48,6 +48,14 @@ class Excel2Asciidoc : Callable<Int> {
     var noHeaders: Boolean = false
 
     @Option(
+        names = ["-t", "--no-titles"],
+        description = ["disables table title using sheet name (or file name for .csv)"],
+        defaultValue = "false",
+        showDefaultValue = ALWAYS
+    )
+    var noTitles: Boolean = false
+
+    @Option(
         names = ["-s", "--sheet"],
         paramLabel = "2",
         description = ["sheet number, starting at 1. if not provided, will try to print all sheets"],
@@ -56,52 +64,75 @@ class Excel2Asciidoc : Callable<Int> {
     val sheetNumber: Int? = null
 
     override fun call(): Int {
-        when {
-            !inputFile.exists() -> throw ParameterException(out.commandLine(), "${inputFile.name} does not exist")
-            inputFile.extension !in allowedFileExtensions -> throw ParameterException(
+        inputFiles.forEach {
+            if (!it.exists()) throw ParameterException(out.commandLine(), "${it.name} does not exist")
+        }
+
+        inputFiles.forEach {
+            if (it.extension !in allowedFileExtensions) throw ParameterException(
                 out.commandLine(),
-                "${inputFile.name} needs to be of type ${allowedFileExtensions.joinToString()}"
+                "${it.name} needs to be of type ${allowedFileExtensions.joinToString()}"
             )
-            else -> {
-                FileInputStream(inputFile).use {
+        }
+
+        inputFiles.forEach { file ->
+            when (file.extension) {
+                "xls", "xlsx" -> FileInputStream(file).use {
                     val workBook = try {
                         XSSFWorkbook(it)
                     } catch (e: OLE2NotOfficeXmlFileException) {
                         HSSFWorkbook(it)
                     }
                     if (sheetNumber == null) {
-                        workBook.forEach { sheet -> sheet.print(noHeaders) }
+                        workBook.forEach { sheet -> sheet.print(noHeaders, file.nameWithoutExtension) }
                     } else {
-                        workBook.getSheetAt(sheetNumber - 1).print(noHeaders)
+                        workBook.getSheetAt(sheetNumber - 1).print(noHeaders, file.nameWithoutExtension)
                     }
                 }
-                return ExitCode.OK
+                else -> with(file) { print() }
             }
+            out.newLine()
         }
+        return ExitCode.OK
     }
 
-    private fun Sheet.print(noHeaders: Boolean) {
+    private fun File.print() {
+        out.println("[${if (noHeaders) "" else "%header,"}format=csv,separator=;]")
+        if (!noTitles) out.println(".${nameWithoutExtension}")
+        out.println("|===")
+        out.println(readLines().joinToString(separator = lineSeparator()))
+        out.println("|===")
+    }
+
+    private fun Sheet.print(noHeaders: Boolean, fileName: String) {
         val maxOfFirstPhysicalCell = map { row -> row.firstCellNum.toInt() }.max() ?: 0
         val minOfFirstNonEmptyCell = map { row -> row.takeWhile { cell -> cell.isEmpty }.size }.min() ?: 0
-        val emptyCellsToShift = maxOf(
-            maxOfFirstPhysicalCell,
-            minOfFirstNonEmptyCell
-        )
+        val emptyCellsToShift = maxOf(maxOfFirstPhysicalCell, minOfFirstNonEmptyCell)
 
         val rows = toList().takeLastWhile { row -> row.isNotEmpty }
 
         if (noHeaders) {
             rows.printColumnDescriptor(emptyCellsToShift)
-            out.tableSeparator()
+            tableSeparator(fileName)
             rows.printContent(emptyCellsToShift)
         } else {
-            out.tableSeparator()
+            tableSeparator(fileName)
             rows.printHeader(emptyCellsToShift)
             rows.printContentAfterHeader(emptyCellsToShift)
         }
-        out.tableSeparator()
+        out.println("|===")
         out.newLine()
     }
+
+    private fun List<Row>.printColumnDescriptor(emptyCellsToShift: Int) =
+        out.println(
+            """[cols="${
+                first().filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }.count()
+            }*"]"""
+        )
+
+    private fun Sheet.tableSeparator(fileName: String) =
+        out.println(if (noTitles) "|===" else ".$fileName $sheetName${lineSeparator()}|===")
 
     private fun List<Row>.printHeader(emptyCellsToShift: Int) =
         out.println(
@@ -113,35 +144,21 @@ class Excel2Asciidoc : Callable<Int> {
         )
 
     private fun List<Row>.printContentAfterHeader(emptyCellsToShift: Int) =
-        out.println(
-            drop(1).joinToString(separator = lineSeparator() + lineSeparator()) {
-                it.cellIterator()
-                    .asSequence()
-                    .filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }
-                    .map(renderCell)
-                    .joinToString(prefix = "|", separator = "${lineSeparator()}|")
-            }
-        )
+        out.println(drop(1).joinRows(emptyCellsToShift))
 
     private fun List<Row>.printContent(emptyCellsToShift: Int) =
-        out.println(
-            joinToString(separator = lineSeparator() + lineSeparator()) {
-                it.cellIterator()
-                    .asSequence()
-                    .filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }
-                    .map(renderCell)
-                    .joinToString(prefix = "|", separator = "${lineSeparator()}|")
-            }
-        )
+        out.println(joinRows(emptyCellsToShift))
 
-    private fun List<Row>.printColumnDescriptor(emptyCellsToShift: Int) =
-        out.println(
-            """[cols="${
-                first().filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }.count()
-            }*"]"""
-        )
+    private fun List<Row>.joinRows(emptyCellsToShift: Int) =
+        joinToString(separator = lineSeparator() + lineSeparator()) {
+            it.cellIterator()
+                .asSequence()
+                .filterIndexed { index, cell -> cell.isNotEmpty || index >= emptyCellsToShift }
+                .map(renderCell)
+                .joinToString(prefix = "|", separator = "${lineSeparator()}|")
+        }
+
 }
-
 
 val renderCell: (Cell) -> String = { cell ->
     when (cell.cellType) {
@@ -157,8 +174,6 @@ val renderCell: (Cell) -> String = { cell ->
 }
 
 internal fun command(args: Array<String>) = CommandLine(Excel2Asciidoc()).execute(*args)
-
-private fun CommandSpec.tableSeparator() = commandLine().out.println("|===")
 private fun CommandSpec.println(s: String) = commandLine().out.println(s)
 private fun CommandSpec.newLine() = commandLine().out.println(lineSeparator())
 private val Cell.isEmpty get() = cellType == BLANK || renderCell(this).trim() == ""
