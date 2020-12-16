@@ -34,14 +34,14 @@ class Excel2Asciidoc : Callable<Int> {
 
     @Parameters(
         index = "0",
-        description = ["One or more .xlsx, .xls or .csv file(s) to print stdout"],
+        description = ["One or more .xlsx, .xls or .csv file(s) to print to stdout"],
         arity = "1..*"
     )
     lateinit var inputFiles: List<File>
 
     @Option(
         names = ["-n", "--no-headers"],
-        description = ["disables interpretation of first row as header"],
+        description = ["Disables interpretation of first row as header"],
         defaultValue = "false",
         showDefaultValue = ALWAYS
     )
@@ -49,7 +49,7 @@ class Excel2Asciidoc : Callable<Int> {
 
     @Option(
         names = ["-t", "--no-titles"],
-        description = ["disables table title using sheet name (or file name for .csv)"],
+        description = ["Disables table title using file name and sheet name (or just file name for .csv)"],
         defaultValue = "false",
         showDefaultValue = ALWAYS
     )
@@ -58,7 +58,7 @@ class Excel2Asciidoc : Callable<Int> {
     @Option(
         names = ["-s", "--sheet"],
         paramLabel = "2",
-        description = ["sheet number, starting at 1. if not provided, will try to print all sheets"],
+        description = ["Sheet number, starting at 1. if not provided, it will try to print all sheets for all files"],
         arity = "1"
     )
     val sheetNumber: Int? = null
