@@ -1,5 +1,7 @@
 = excel2adoc CLI
 
+image:https://travis-ci.com/ncomet/excel2adoc.svg?branch=master["koson build", link="https://travis-ci.com/ncomet/excel2adoc"]
+
 == User guide
 
 `$ excel2adoc -h`
