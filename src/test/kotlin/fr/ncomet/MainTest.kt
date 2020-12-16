@@ -2,7 +2,6 @@ package fr.ncomet
 
 import com.ginsberg.junit.exit.ExpectSystemExitWithStatus
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junitpioneer.jupiter.StdIo
 import org.junitpioneer.jupiter.StdOut

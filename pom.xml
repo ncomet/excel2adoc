@@ -41,14 +41,6 @@
       <artifactId>quarkus-kotlin</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-arc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi</artifactId>
       <version>4.1.2</version>
@@ -150,11 +142,6 @@
           <compilerPlugins>
             <plugin>all-open</plugin>
           </compilerPlugins>
-          <pluginOptions>
-            <option>all-open:annotation=javax.ws.rs.Path</option>
-            <option>all-open:annotation=javax.enterprise.context.ApplicationScoped</option>
-            <option>all-open:annotation=io.quarkus.test.junit.QuarkusTest</option>
-          </pluginOptions>
         </configuration>
       </plugin>
       <plugin>

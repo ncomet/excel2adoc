@@ -8,8 +8,20 @@ cache:
   directories:
     - $HOME/.m2
 
-#services:
-#  - docker
-#
-#script:
-#  - mvn package -Pnative -Dquarkus.native.container-build=true
+services:
+  - docker
+
+before_deploy:
+  - mvn package -B -DskipTests=true -Pnative -Dquarkus.native.container-build=true
+  - mv target/excel2adoc-*runner target/excel2adoc
+
+deploy:
+  - provider: releases
+    api_key: "${GITHUB_TOKEN}"
+    file_glob: true
+    file: target/excel2adoc
+    skip_cleanup: true
+    on:
+      repo: "${TRAVIS_REPO_SLUG}"
+      branch: master
+      tags: true
