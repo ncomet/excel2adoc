@@ -1,0 +1,12 @@
+language: java
+jdk: openjdk11
+
+cache:
+  directories:
+    - $HOME/.m2
+
+#services:
+#  - docker
+#
+#script:
+#  - mvn package -Pnative -Dquarkus.native.container-build=true
