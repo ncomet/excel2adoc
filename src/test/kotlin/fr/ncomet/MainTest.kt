@@ -695,7 +695,7 @@ class MainTest {
         assertThat(out.capturedLines().joinToString(lineSeparator())).isEqualTo(
             """.file-every-cell-types Feuille1
             :|===
-            :|String |1.0 |1.65 |SUM(B1,C1) |wtf() |1/0
+            :|String |1.0 |1.65 |SUM(B1,C1) |wtf() |1/0 |true
             :
             :|===
 """.trimMargin(":")

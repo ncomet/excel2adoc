@@ -1,7 +1,5 @@
 package fr.ncomet
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook
-import org.apache.poi.openxml4j.exceptions.OLE2NotOfficeXmlFileException
 import org.apache.poi.ss.usermodel.Cell
 import org.apache.poi.ss.usermodel.CellType.*
 import org.apache.poi.ss.usermodel.Row
@@ -78,11 +76,7 @@ class Excel2Asciidoc : Callable<Int> {
         inputFiles.forEach { file ->
             when (file.extension) {
                 "xlsx" -> FileInputStream(file).use {
-                    val workBook = try {
-                        XSSFWorkbook(it)
-                    } catch (e: OLE2NotOfficeXmlFileException) {
-                        HSSFWorkbook(it)
-                    }
+                    val workBook = XSSFWorkbook(it)
                     if (sheetNumber == null) {
                         workBook.forEach { sheet -> sheet.print(noHeaders, file.nameWithoutExtension) }
                     } else {
@@ -167,13 +161,10 @@ class Excel2Asciidoc : Callable<Int> {
 
 val renderCell: (Cell) -> String = { cell ->
     when (cell.cellType) {
-        _NONE -> ""
         NUMERIC -> cell.numericCellValue.toString()
         STRING -> cell.stringCellValue
         FORMULA -> cell.cellFormula
-        BLANK -> ""
         BOOLEAN -> cell.booleanCellValue.toString()
-        ERROR -> cell.errorCellValue.toString()
         else -> ""
     }
 }
