@@ -17,7 +17,7 @@ import java.lang.System.lineSeparator
 import java.util.concurrent.Callable
 import kotlin.system.exitProcess
 
-val allowedFileExtensions = listOf("xlsx", "xls", "csv")
+val allowedFileExtensions = listOf("xlsx", "csv")
 
 fun main(args: Array<String>): Unit = exitProcess(command(args))
 
@@ -25,7 +25,7 @@ fun main(args: Array<String>): Unit = exitProcess(command(args))
     name = "excel2adoc",
     mixinStandardHelpOptions = true,
     version = ["excel2adoc v1.0"],
-    description = ["Prints an .xlsx, .xls or .csv file into its asciidoc representation on stdout"]
+    description = ["Prints .xlsx or .csv file(s) into their asciidoc representation on stdout"]
 )
 class Excel2Asciidoc : Callable<Int> {
 
@@ -34,7 +34,7 @@ class Excel2Asciidoc : Callable<Int> {
 
     @Parameters(
         index = "0",
-        description = ["One or more .xlsx, .xls or .csv file(s) to print to stdout"],
+        description = ["One or more .xlsx or .csv file(s) to print to stdout"],
         arity = "1..*"
     )
     lateinit var inputFiles: List<File>
@@ -77,7 +77,7 @@ class Excel2Asciidoc : Callable<Int> {
 
         inputFiles.forEach { file ->
             when (file.extension) {
-                "xls", "xlsx" -> FileInputStream(file).use {
+                "xlsx" -> FileInputStream(file).use {
                     val workBook = try {
                         XSSFWorkbook(it)
                     } catch (e: OLE2NotOfficeXmlFileException) {
@@ -97,11 +97,14 @@ class Excel2Asciidoc : Callable<Int> {
     }
 
     private fun File.print() {
-        out.println("[${if (noHeaders) "" else "%header,"}format=csv,separator=;]")
-        if (!noTitles) out.println(".${nameWithoutExtension}")
-        out.println("|===")
-        out.println(readLines().joinToString(separator = lineSeparator()))
-        out.println("|===")
+        val fileLines = readLines()
+        if (fileLines.isNotEmpty()) {
+            out.println("[${if (noHeaders) "" else "%header,"}format=csv,separator=;]")
+            if (!noTitles) out.println(".${nameWithoutExtension}")
+            out.println("|===")
+            out.println(fileLines.joinToString(separator = lineSeparator()))
+            out.println("|===")
+        }
     }
 
     private fun Sheet.print(noHeaders: Boolean, fileName: String) {
@@ -111,17 +114,19 @@ class Excel2Asciidoc : Callable<Int> {
 
         val rows = toList().takeLastWhile { row -> row.isNotEmpty }
 
-        if (noHeaders) {
-            rows.printColumnDescriptor(emptyCellsToShift)
-            tableSeparator(fileName)
-            rows.printContent(emptyCellsToShift)
-        } else {
-            tableSeparator(fileName)
-            rows.printHeader(emptyCellsToShift)
-            rows.printContentAfterHeader(emptyCellsToShift)
+        if (rows.isNotEmpty()) {
+            if (noHeaders) {
+                rows.printColumnDescriptor(emptyCellsToShift)
+                tableSeparator(fileName)
+                rows.printContent(emptyCellsToShift)
+            } else {
+                tableSeparator(fileName)
+                rows.printHeader(emptyCellsToShift)
+                rows.printContentAfterHeader(emptyCellsToShift)
+            }
+            out.println("|===")
+            out.newLine()
         }
-        out.println("|===")
-        out.newLine()
     }
 
     private fun List<Row>.printColumnDescriptor(emptyCellsToShift: Int) =

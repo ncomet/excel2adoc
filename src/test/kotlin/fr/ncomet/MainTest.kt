@@ -28,13 +28,6 @@ class MainTest {
     }
 
     @Test
-    @Disabled(value = "to check: NotOLE2FileException: Invalid header signature; read 0x006D007500530005, expected 0xE11AB1A1E011CFD0 - Your file appears not to be a valid OLE2 document, maybe a maven resource issue ?")
-    @ExpectSystemExitWithStatus(2)
-    fun `should load an xls file`() {
-        command(arrayOf("src/test/resources/file.xls"))
-    }
-
-    @Test
     @StdIo
     fun `should produce expected output on an xlsx file`(out: StdOut) {
         command(arrayOf("src/test/resources/file.xlsx"))
@@ -688,6 +681,29 @@ class MainTest {
 
     @Test
     @StdIo
+    fun `should print empty output for an empty xlsx file`(out: StdOut) {
+        command(arrayOf("src/test/resources/empty-file.xlsx"))
+
+        assertThat(out.capturedLines().joinToString(lineSeparator())).isEqualTo("")
+    }
+
+    @Test
+    @StdIo
+    fun `should product output for every cell type`(out: StdOut) {
+        command(arrayOf("src/test/resources/file-every-cell-types.xlsx"))
+
+        assertThat(out.capturedLines().joinToString(lineSeparator())).isEqualTo(
+            """.file-every-cell-types Feuille1
+            :|===
+            :|String |1.0 |1.65 |SUM(B1,C1) |wtf() |1/0
+            :
+            :|===
+""".trimMargin(":")
+        )
+    }
+
+    @Test
+    @StdIo
     fun `should process a csv file`(out: StdOut) {
         command(arrayOf("src/test/resources/file.csv"))
 
@@ -755,6 +771,14 @@ class MainTest {
             :|===
 """.trimMargin(":")
         )
+    }
+
+    @Test
+    @StdIo
+    fun `should print empty output for an empty csv file`(out: StdOut) {
+        command(arrayOf("src/test/resources/empty-file.csv"))
+
+        assertThat(out.capturedLines().joinToString(lineSeparator())).isEqualTo("")
     }
 
     @Test
