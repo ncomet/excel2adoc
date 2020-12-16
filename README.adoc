@@ -9,9 +9,8 @@ image:https://travis-ci.com/ncomet/excel2adoc.svg?branch=master["excel2adoc buil
 [code, bash]
 ----
 Usage: excel2adoc [-hntV] [-s=2] <inputFiles>...
-Prints an .xlsx, .xls or .csv file into its asciidoc representation on stdout
-      <inputFiles>...   One or more .xlsx, .xls or .csv file(s) to print to
-                          stdout
+Prints .xlsx or .csv file(s) into their asciidoc representation on stdout
+      <inputFiles>...   One or more .xlsx or .csv file(s) to print to stdout
   -h, --help            Show this help message and exit.
   -n, --no-headers      Disables interpretation of first row as header
                           Default: false
