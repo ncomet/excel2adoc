@@ -25,7 +25,7 @@ Prints an .xlsx, .xls or .csv file into its asciidoc representation on stdout
 
 Because we all know product managers, project managers, timetable reporters that only swear by _Excel_ to provide us with some insightful piece of information.
 
-Let's get real: if we want it to work, we use https://www.oreilly.com/library/view/living-documentation-continuous/9780134689418/[documentation as code], not binaries.
+Let's get real: if we want it to work, we use https://www.oreilly.com/library/view/living-documentation-continuous/9780134689418/[documentation as code,window=_blank], not binaries.
 
 Here is a CLI tool to convert to the real deal, *text*. Just text, that will find all its use under a proper CVS.
 
@@ -33,7 +33,7 @@ Here is a CLI tool to convert to the real deal, *text*. Just text, that will fin
 
 This project uses Quarkus, the Supersonic Subatomic Framework.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+If you want to learn more about Quarkus, please visit its website: https://quarkus.io/[window=_blank]
 
 == Running the application in dev mode
 
@@ -84,4 +84,4 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 
 You can then execute your native executable with: `./target/excel2adoc-1.0-runner`
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.html
+If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.html[window=_blank]
