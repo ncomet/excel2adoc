@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@latest
     - name: Install graalvm
-      uses: DeLaGuardo/setup-graalvm@3
+      uses: DeLaGuardo/setup-graalvm@master
       with:
         graalvm-version: '20.2.0.java11'
     - name: Install native-image
