@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-2019
 
     steps:
-    - uses: actions/checkout@latest
+    - uses: actions/checkout@v2
     - name: Install graalvm
       uses: DeLaGuardo/setup-graalvm@master
       with:
