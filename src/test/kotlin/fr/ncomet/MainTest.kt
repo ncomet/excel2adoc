@@ -116,7 +116,7 @@ class MainTest {
             :|6548.0
             :|6.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -210,7 +210,7 @@ class MainTest {
             :|6548.0
             :|6.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -313,7 +313,7 @@ class MainTest {
             :|6548.0
             :|6.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -416,7 +416,7 @@ class MainTest {
             :|6548.0
             :|6.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -508,7 +508,7 @@ class MainTest {
             :|24.0
             :|25.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -600,7 +600,7 @@ class MainTest {
             :|24.0
             :|25.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -625,7 +625,7 @@ class MainTest {
             :|30.0
             :|175.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -649,7 +649,7 @@ class MainTest {
             :|30.0
             :|175.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -674,7 +674,7 @@ class MainTest {
             :|30.0
             :|175.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -697,7 +697,7 @@ class MainTest {
             :|String |1.0 |1.65 |SUM(B1,C1) |wtf() |1/0 |true
             :
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -721,7 +721,7 @@ class MainTest {
             :Earlean;Melgar;Female;United States;27;16/08/2016;2456;14
             :Vincenza;Weiland;Female;United States;40;21/05/2015;6548;6
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -745,7 +745,7 @@ class MainTest {
             :Earlean;Melgar;Female;United States;27;16/08/2016;2456;14
             :Vincenza;Weiland;Female;United States;40;21/05/2015;6548;6
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -768,7 +768,7 @@ class MainTest {
             :Earlean;Melgar;Female;United States;27;16/08/2016;2456;14
             :Vincenza;Weiland;Female;United States;40;21/05/2015;6548;6
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 
@@ -884,7 +884,9 @@ class MainTest {
             :|24.0
             :|25.0
             :|===
-""".trimMargin(":")
+""".trimMarginAndWindowsCR()
         )
     }
 }
+
+fun String.trimMarginAndWindowsCR() = trimMargin(":").replace("\n", lineSeparator())
