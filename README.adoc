@@ -2,6 +2,8 @@
 
 image:https://travis-ci.com/ncomet/excel2adoc.svg?branch=master["excel2adoc build", link="https://travis-ci.com/ncomet/excel2adoc"] image:https://codecov.io/gh/ncomet/excel2adoc/branch/master/graph/badge.svg["excel2adoc coverage", link="https://codecov.io/gh/ncomet/excel2adoc"]
 
+A CLI that prints .xlsx or .csv file(s) into their asciidoc representation on stdout
+
 == User guide
 
 `$ excel2adoc -h`
