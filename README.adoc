@@ -22,6 +22,10 @@ Prints .xlsx or .csv file(s) into their asciidoc representation on stdout
   -V, --version         Print version information and exit.
 ----
 
+== Releases
+
+The binaries (linux, macOS and windows) can be found on https://github.com/ncomet/excel2adoc/releases[this project release page]
+
 == Why?
 
 Because we all know product managers, project managers, timetable reporters that only swear by _Excel_ to provide us with some insightful piece of information.
