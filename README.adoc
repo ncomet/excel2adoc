@@ -32,7 +32,7 @@ Here is a CLI tool to convert to the real deal, *text*. Just text, that will fin
 
 == How does it work?
 
-This project uses Quarkus, the Supersonic Subatomic Framework.
+This project uses Quarkus, the Supersonic Subatomic Framework, https://poi.apache.org/[Apache POI] and [https://kotlinlang.org/]Kotlin
 
 If you want to learn more about Quarkus, please visit its website: https://quarkus.io/[window=_blank]
 
