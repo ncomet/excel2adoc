@@ -59,7 +59,7 @@ class Excel2Asciidoc : Callable<Int> {
         description = ["Sheet number, starting at 1. if not provided, it will try to print all sheets for all files"],
         arity = "1"
     )
-    val sheetNumber: Int? = null
+    val sheetNumber: List<String> = emptyList()
 
     override fun call(): Int {
         inputFiles.forEach {
@@ -77,10 +77,10 @@ class Excel2Asciidoc : Callable<Int> {
             when (file.extension) {
                 "xlsx" -> FileInputStream(file).use {
                     val workBook = XSSFWorkbook(it)
-                    if (sheetNumber == null) {
+                    if (sheetNumber.isEmpty()) {
                         workBook.forEach { sheet -> sheet.print(noHeaders, file.nameWithoutExtension) }
                     } else {
-                        workBook.getSheetAt(sheetNumber - 1).print(noHeaders, file.nameWithoutExtension)
+                        workBook.getSheetAt(sheetNumber.first().toInt() - 1).print(noHeaders, file.nameWithoutExtension)
                     }
                 }
                 else -> with(file) { print() }
